@@ -1,0 +1,83 @@
+
+# *sensorsd* IPC protocol
+
+The program *sensorsd* implements a socket IPC protocol around Android's
+Sensors HAL API. This document describes the IPC protocol in detail.
+
+Clients (i.e., external software) of sensors functionality establish a
+connection with *sensorsd* and send **command messages.** For each command,
+*sensorsd* replies with a **response message.** Examples of commands are
+enabling and disabling individual sensors.
+
+In addition to responses, *sensorsd* also sends **notification messages**
+to inform its client about external events. An examples of notifications
+are events from sensors.
+
+
+## Connection establishment
+
+Connections are **always** established by *sensorsd*. Supported sockets are
+in the domain AF_UNIX with type SOCK_SEQPACKET. The client shall
+
+  1. create a compatible listen socket,
+  2. set an abstract socket name,
+  3. start listening on the created socket, and
+  4. start *sensorsd*.
+
+The abstract socket name (excluding the trailing \0) is supplied to *sensorsd*
+via the command-line option '-a'. *Sensorsd* will establish a connection to
+the respective socket. If no socket name is given, the default is *sensorsd.*
+
+
+## IPC protocol
+
+The IPC protocol is PDU based. Each PDU contains exactly one message. There
+are 3 types of messages:
+
+  * commands,
+  * resonses, and
+  * notifications.
+
+All PDUs have the same format (sizes in bit):
+
+  +--------+--------+----------------+--- ... ---+
+  | Service| Opcode | Payload length |  Payload  |
+  +--------+--------+----------------+--- ... ---+
+       8        8           16         <variable>
+
+A **service** represents a group of messages, each **opcode** represents a
+message of the service. Commands and their responses use the same opcode and
+can be distinguished by the message's direction. Commands always flow from
+client to daemon, responses always flow from daemon to client.
+
+Notifications also always flow from daemon to client. They are distiguished
+from responses by their opcode, which always has the MSB set to 1 for
+notifications.
+
+The format of the IPC protocol is intended to be compatible with the HAL
+protocol for BlueZ [1].
+
+### Registry service
+
+The service ID is 0x00.
+
+#### Commands / Responses
+
+  * Opcode 0x00   Error response
+
+      + Command:  - n/a
+      + Response: - Error code (1 octet)
+
+  * Opcode 0x01   Register service
+
+      + Command:  - Service id (1 octet)
+      + Response: - Protocol version (4 octets)
+
+  * Opcode 0x02   Unregister service
+
+      + Command:  - Service id (1 octet)
+      + Response: <none>
+
+## References
+
+[1] [Android HAL protocol for Bluetooth](https://git.kernel.org/cgit/bluetooth/bluez.git/tree/android/hal-ipc-api.txt)

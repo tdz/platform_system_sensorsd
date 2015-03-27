@@ -1,0 +1,72 @@
+
+# sensorsd
+
+Sensorsd wraps Android's Sensors driver behind a network protocol. The
+program is licensed under the Apache License 2.0. See the file LICENSE
+for more information.
+
+Sensorsd acts as a proxy between Android's Sensors driver and an external
+program. It opens the Sensors driver and waits on a socket connection for
+external commands (i.e., from Gecko). When a command arrives it executes
+a corresponding driver operation and reports back the result. If the
+Sensors driver signals an event (i.e., a sensor fired), sensorsd forwards
+a corresponding notification to the connected program.
+
+
+## Supported Versions
+
+Sensorsd supports Android with API version 14 or later.
+
+
+## Building
+
+Sensorsd should come as part of your b2g repository. Otherwise, you can
+clone the repository into your local b2g checkout and add the target
+
+  sensorsd
+
+to the list of packages. See the file NOTICE for a pointer to the latest
+code release. Sensorsd requires
+
+  libfdio
+  libpdu
+
+Both libraries are available from the same location as sensorsd.
+
+
+## Protocol
+
+For IPC, sensorsd uses a protocol as defined in doc/ipc.txt. The protocol
+is supposed to be stable across releases.
+
+
+## Coding style
+
+Sensorsd is implemented in C. The dialect is C89 with GNU extensions. The
+coding style follows the guidelines for C++ as defined at
+
+  https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Coding_Style
+
+with the following exceptions:
+
+  * use lower case with underscores (foo_bar) instead of camel case (FooBar)
+
+  * no 'moz_' prefixes are required (or similar namespace separation)
+
+  * except for 'g_' for global variables
+
+  * in the general case return 0 for success and -1 for errors
+
+  * print an error message *exactly* where the error occurs
+
+  * use '#pragma once' instead of include guards
+
+
+## Submitting bug reports and patches
+
+Bug reports for sensorsd can be filed in Mozilla's bug tracker at
+
+  https://bugzilla.mozilla.org
+
+Patches are reviewed there as well. Please cc <tzimmermann@mozilla.com> in
+the bug report if you need help.
