@@ -30,12 +30,17 @@
 
 #include "service.h"
 
+#include "pdu.h"
+#include "poll.h"
+
 int (*g_service_handler[PDU_MAX_NUM_SERVICES])(const struct pdu*);
 
 register_func (* const g_register_service[PDU_MAX_NUM_SERVICES])(
   void (*)(struct pdu_wbuf*)) = {
   /* SERVICE_REGISTRY is special and not handled here */
+  [SERVICE_POLL] = register_poll
 };
 
 int (*g_unregister_service[PDU_MAX_NUM_SERVICES])() = {
+  [SERVICE_POLL] = unregister_poll
 };

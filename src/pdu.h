@@ -39,7 +39,8 @@ enum {
 /* This enumerator lists the available services.
  */
 enum {
-  SERVICE_REGISTRY = 0x00
+  SERVICE_REGISTRY = 0x00,
+  SERVICE_POLL = 0x01
 };
 
 /* The error codes are kept in sync with Bluetooth status to make

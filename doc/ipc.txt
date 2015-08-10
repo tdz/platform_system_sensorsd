@@ -78,6 +78,81 @@ The service ID is 0x00.
       + Command:  - Service id (1 octet)
       + Response: <none>
 
+### Poll service
+
+The service ID is 0x01.
+
+#### Commands / Responses
+
+  * Opcode 0x00   Error response
+
+      + Command:  - n/a
+      + Response: - Error code (1 octet)
+
+  * Opcode 0x01   Enable sensor
+
+      + Command:  - Sensor id (4 octets)
+      + Resonse:  <none>
+
+  * Opcode 0x02   Disable sensor
+
+      + Command:  - Sensor id (4 octets)
+      + Resonse:  <none>
+
+  * Opcode 0x03   Set sensor period
+
+      + Command:  - Sensor id (4 octets)
+                  - Period in ms (8 octets)
+      + Resonse:  <none>
+
+#### Notifications
+
+  * Opcode 0x80   Error
+
+      - Error code (1 octet)
+
+  * Opcode 0x81   Sensor detected
+
+      - Sensor id (4 octets)
+      - Sensor type (4 octets)
+      - Max range (4 octets)
+      - Resolution (4 octets)
+      - Power consumption in mA (4 octets)
+      - Min delay (4 octets)
+      - Max delay (4 octets)
+      - Sensor trigger mode (1 octet)
+      - Sensor delivery mode (1 octet)
+
+  * Opcode 0x82   Sensor lost
+
+      - Sensor id (4 octets)
+
+  * Opcode 0x83   Sensor event detected
+
+      - Sensor id (4 octets)
+      - Sensor type (4 octets)
+      - Timestamp in nanoseconds since system start (8 octets)
+      - Sensor status (4 octets)
+      - Event data (variable)
+      - Sensor delivery mode (1 octet)
+
+#### Enumerators
+
+  * Sensor type
+
+      - Synced with AOSP SENSOR_TYPE_ constants
+
+  * Sensor mode
+
+      - Synced with AOSP SENSOR_MODE_ constants
+
+#### Structures
+
+  * Event data
+
+      - Variable number of data fields
+
+
 ## References
 
 [1] [Android HAL protocol for Bluetooth](https://git.kernel.org/cgit/bluetooth/bluez.git/tree/android/hal-ipc-api.txt)
