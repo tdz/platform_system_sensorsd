@@ -1,7 +1,8 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES:= io.c \
+LOCAL_SRC_FILES:= poll.c \
+                  io.c \
                   main.c \
                   pdu.c \
                   registry.c \
@@ -11,6 +12,7 @@ LOCAL_C_INCLUDES := system/libfdio/include \
 LOCAL_CFLAGS := -DANDROID_VERSION=$(PLATFORM_SDK_VERSION) -Wall -Werror -UNDEBUG
 LOCAL_SHARED_LIBRARIES := libpdu \
                           libfdio \
+                          libhardware \
                           libhardware_legacy \
                           liblog
 LOCAL_MODULE:= sensorsd
