@@ -45,6 +45,7 @@
 #include "log.h"
 #include "memptr.h"
 #include "pdu.h"
+#include "receiver_svc.h"
 
 #ifndef SENSOR_TYPE_META_DATA
 #define SENSOR_TYPE_META_DATA (0)
@@ -543,10 +544,14 @@ error_ntf(uint8_t error)
     abort();
   }
 
+#if 1
   if (run_task(send_ntf_pdu_cb, wbuf) < 0) {
     ALOGE("Could not send error PDU; aborting immediately");
     abort();
   }
+#else
+  send_notification_to_receiver((const void*)&wbuf->buf.pdu, pdu_size(&wbuf->buf.pdu));
+#endif
 }
 
 static void
@@ -569,9 +574,13 @@ sensor_detected_ntf(const struct sensor_t* sensor)
     goto cleanup;
   }
 
+#if 1
   if (run_task(send_ntf_pdu_cb, wbuf) < 0) {
     goto cleanup;
   }
+#else
+  send_notification_to_receiver((const void*)&wbuf->buf.pdu, pdu_size(&wbuf->buf.pdu));
+#endif
 
   return;
 
@@ -659,9 +668,13 @@ event_ntf(const struct sensors_event_t* ev, uint8_t delivery, uint64_t timestamp
     goto cleanup;
   }
 
+#if 0
   if (run_task(send_ntf_pdu_cb, wbuf) < 0) {
     goto cleanup;
   }
+#else
+  send_notification_to_receiver((const void*)&wbuf->buf.pdu, pdu_size(&wbuf->buf.pdu));
+#endif
 
   return;
 
@@ -856,6 +869,8 @@ poll_devices(struct sensor_t* sensors)
   assert(g_poll_device->poll);
 
   assert(sensors);
+
+  init_receiver_service();
 
   while (1) {
     sensors_event_t ev[16];

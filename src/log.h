@@ -28,6 +28,9 @@
 
 #pragma once
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif /* LOG_TAG */
 #define LOG_TAG "sensorsd"
 
 #include <errno.h>
