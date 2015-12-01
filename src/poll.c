@@ -155,7 +155,8 @@ enum {
     IPC_FIELD_SIZE_TIMESTAMP + /* timestamp */ \
     IPC_FIELD_SIZE_ACCURACY + /* accuracy */ \
     (_data_size) + /* data */ \
-    IPC_FIELD_SIZE_DELIVERY_MODE /* sensor delivery mode */ \
+    IPC_FIELD_SIZE_DELIVERY_MODE + /* sensor delivery mode */ \
+    IPC_FIELD_SIZE_TIMESTAMP /* timestamp */ \
   )
 
 static void (*g_send_pdu)(struct pdu_wbuf* wbuf);
@@ -579,7 +580,7 @@ cleanup:
 }
 
 static void
-event_ntf(const struct sensors_event_t* ev, uint8_t delivery)
+event_ntf(const struct sensors_event_t* ev, uint8_t delivery, uint64_t timestamp)
 {
   static const uint8_t data_size[] = {
     [SENSOR_TYPE_META_DATA] = 0,
@@ -653,7 +654,8 @@ event_ntf(const struct sensors_event_t* ev, uint8_t delivery)
   init_pdu(&wbuf->buf.pdu, SERVICE_POLL, OPCODE_EVENT_NTF);
 
   if ((append_sensors_event_t(&wbuf->buf.pdu, ev) < 0) ||
-      (append_to_pdu(&wbuf->buf.pdu, "C", delivery) < 0)) {
+      (append_to_pdu(&wbuf->buf.pdu, "C", delivery) < 0) ||
+      (append_to_pdu(&wbuf->buf.pdu, "L", timestamp) < 0)) {
     goto cleanup;
   }
 
@@ -858,6 +860,7 @@ poll_devices(struct sensor_t* sensors)
   while (1) {
     sensors_event_t ev[16];
     int res, count, i;
+    uint64_t timestamp;
 
     res = g_poll_device->poll(g_poll_device, ev, ARRAY_LENGTH(ev));
 
@@ -876,6 +879,22 @@ poll_devices(struct sensor_t* sensors)
       }
     }
     count = res;
+
+    {
+      struct timespec ts;
+      memset(&ts, 0, sizeof(ts));
+      if (clock_gettime(CLOCK_BOOTTIME, &ts) < 0) {
+        ALOGE_ERRNO("clock_gettime");
+        timestamp = 0;
+      } else {
+        timestamp = ((uint64_t)ts.tv_sec) * 1000000000 + ts.tv_nsec;
+      }
+    }
+
+#if 0
+    ALOGE("timestamp %llu, sec %lu nsec %lu",
+          (unsigned long long)timestamp, (unsigned long)ts.tv_sec, (unsigned long)ts.tv_nsec);
+#endif
 
     for (i = 0; i < count; ++i) {
       const struct sensor_t* sensor;
@@ -896,7 +915,7 @@ poll_devices(struct sensor_t* sensors)
       /* The delivery mode will help clients to manage their wake locks. */
       delivery = !!(flags & SENSOR_FLAG_WAKE_UP);
 
-      event_ntf(ev + i, delivery);
+      event_ntf(ev + i, delivery, timestamp);
     }
   }
 
