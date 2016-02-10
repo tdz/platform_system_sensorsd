@@ -46,6 +46,21 @@
 #include "memptr.h"
 #include "pdu.h"
 
+/*
+ * NUM_SENSOR_TYPES sets the number of type values for sensors. You'll
+ * have to increase this value to support new sensor types, and update
+ * the related arrays in this file.
+ */
+#if ANDROID_VERSION >= 23
+#define NUM_SENSOR_TYPES  (SENSOR_TYPE_WRIST_TILT_GESTURE + 1)
+#elif ANDROID_VERSION >= 21
+#define NUM_SENSOR_TYPES  (SENSOR_TYPE_PICK_UP_GESTURE + 1)
+#elif ANDROID_VERSION >= 18
+#define NUM_SENSOR_TYPES  (SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR + 1)
+#else
+#define NUM_SENSOR_TYPES  (SENSOR_TYPE_AMBIENT_TEMPERATURE + 1)
+#endif
+
 #ifndef SENSOR_TYPE_META_DATA
 #define SENSOR_TYPE_META_DATA (0)
 #endif /* SENSOR_TYPE_META_DATA */
@@ -70,7 +85,7 @@
 #define REPORTING_MODE_MASK   (0xe)
 #define REPORTING_MODE_SHIFT  (1)
 
-static const uint8_t g_default_sensor_flags[] = {
+static const uint8_t g_default_sensor_flags[NUM_SENSOR_TYPES] = {
   [SENSOR_TYPE_META_DATA] = 0,
   [SENSOR_TYPE_ACCELEROMETER] = SENSOR_FLAG_CONTINUOUS_MODE,
   [SENSOR_TYPE_GEOMAGNETIC_FIELD] = SENSOR_FLAG_CONTINUOUS_MODE,
@@ -102,6 +117,8 @@ static const uint8_t g_default_sensor_flags[] = {
   [SENSOR_TYPE_WAKE_GESTURE] = SENSOR_FLAG_ONE_SHOT_MODE,
   [SENSOR_TYPE_GLANCE_GESTURE] = SENSOR_FLAG_ONE_SHOT_MODE,
   [SENSOR_TYPE_PICK_UP_GESTURE] = SENSOR_FLAG_ONE_SHOT_MODE,
+#endif
+#if ANDROID_VERSION >= 23
   [SENSOR_TYPE_WRIST_TILT_GESTURE] = SENSOR_FLAG_SPECIAL_REPORTING_MODE
 #endif
 };
@@ -559,6 +576,10 @@ sensor_detected_ntf(const struct sensor_t* sensor)
 
   assert(sensor);
 
+  if (sensor->type >= NUM_SENSOR_TYPES) {
+    return; /* Unknown sensor type; ignore */
+  }
+
   wbuf = create_pdu_wbuf(OPCODE_SENSOR_DETECTED_NTF_SIZE, 0, NULL);
 
   if (!wbuf) {
@@ -585,7 +606,7 @@ cleanup:
 static void
 event_ntf(const struct sensors_event_t* ev, uint8_t delivery)
 {
-  static const uint8_t data_size[] = {
+  static const uint8_t data_size[NUM_SENSOR_TYPES] = {
     [SENSOR_TYPE_META_DATA] = 0,
     [SENSOR_TYPE_ACCELEROMETER] = 12,
     [SENSOR_TYPE_GEOMAGNETIC_FIELD] = 12,
@@ -893,7 +914,7 @@ poll_devices(struct sensor_t* sensors)
       flags = sensor->flags;
 #else
       if (sensor->type >= (ssize_t)ARRAY_LENGTH(g_default_sensor_flags)) {
-        continue; // Unknown sensors type; ignore
+        continue; /* Unknown sensors type; ignore */
       }
       flags = g_default_sensor_flags[sensor->type];
 #endif
